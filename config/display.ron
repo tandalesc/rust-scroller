@@ -1,0 +1,4 @@
+(
+  title: "rust-scroller",
+  dimensions: Some((800, 600)),
+)
