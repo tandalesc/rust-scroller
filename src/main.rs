@@ -31,8 +31,6 @@ use amethyst::{
     window::ScreenDimensions
 };
 
-use std::collections::HashMap;
-
 mod animation;
 use crate::animation::{SpriteAnimation, AnimationSystem, AnimationType, AnimationData, AnimationResource};
 
@@ -67,7 +65,8 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
         acceleration: Vector3::new(0.,0.,0.),
         velocity: Vector3::new(0.,0.,0.),
         mass: 1.,
-        friction: 0.4
+        friction: 0.4,
+        is_jumping: false
     };
     let animation_data =  world.read_resource::<AnimationResource>().player_idle.clone();
     let animation = SpriteAnimation::from_data(animation_data);
@@ -90,7 +89,7 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
         sprite_number: 0
     };
     let physics = Physics::default();
-    let animation_data =  world.read_resource::<AnimationResource>().player_idle.clone();
+    let animation_data =  world.read_resource::<AnimationResource>().player_attack_1.clone();
     let animation = SpriteAnimation::from_data(animation_data);
     world.create_entity()
         .with(sprite_render)
@@ -124,8 +123,10 @@ impl SimpleState for MyState {
         let mut world = data.world;
         world.add_resource(
             AnimationResource {
-                player_idle: AnimationData::new(vec![0,0,0,0,0,1,2,3,4,5,6,7,8,9], 1./12., AnimationType::Idle),
-                player_run: AnimationData::new(vec![10,11,12,13,14,15,16,17], 1./12., AnimationType::Run)
+                player_idle: AnimationData::new(vec![0,1,2,3], 1./10., AnimationType::Idle, true),
+                player_run: AnimationData::new(vec![4,5,6,7,8,9], 1./10., AnimationType::Run, true),
+                player_jump: AnimationData::new(vec![10,11,12,13], 1./10., AnimationType::Jump, false),
+                player_attack_1: AnimationData::new(vec![14,15,16,17,18], 1./10., AnimationType::Attack1, true)
             }
         );
         let sprite_sheet_handle = load_sprite_sheet(&world);
@@ -146,7 +147,8 @@ pub struct Physics {
     acceleration: Vector3,
     velocity: Vector3,
     mass: f32,
-    friction: f32
+    friction: f32,
+    is_jumping: bool
 }
 impl Component for Physics {
     type Storage = VecStorage<Self>;
@@ -157,7 +159,8 @@ impl Default for Physics {
             acceleration: Vector3::new(0., 0., 0.),
             velocity: Vector3::new(0., 0., 0.),
             mass: 0.,
-            friction: 0.
+            friction: 0.,
+            is_jumping: false
         }
     }
 }
@@ -173,10 +176,12 @@ impl <'a> System<'a> for PhysicsSystem {
         let dt = time.delta_seconds();
         for (physics, transform) in (&mut physics_set, &mut transform).join() {
             //
-            if transform.translation().y > 20. {
+            if transform.translation().y > 20. || physics.velocity.y > 0. {
                 physics.acceleration.y = -9.8;
                 physics.velocity.y += physics.acceleration.y*dt;
-            } else if physics.velocity.y < 0. {
+            } else if physics.is_jumping {
+                //we hit the ground, reset jumping flag
+                physics.is_jumping = false;
                 physics.acceleration.y = 0.;
                 physics.velocity.y = 0.;
             }
@@ -205,7 +210,8 @@ impl <'a> System<'a> for MovementSystem {
         );
         for (_, physics) in (&player, &mut physics_set).join() {
             physics.acceleration.x = rx as f32 * 10.;
-            if ry == 1. && physics.velocity.y == 0. {
+            if ry == 1. && physics.is_jumping == false {
+                physics.is_jumping = true;
                 physics.velocity.y = 5.0;
             }
         }
@@ -228,7 +234,7 @@ fn main() -> amethyst::Result<()> {
                 .with_bindings_from_file(config_dir.join("input.ron"))?
         )?
         .with(PhysicsSystem, "physics_system", &[])
-        .with(MovementSystem, "movement_system", &["physics_system"])
+        .with(MovementSystem, "movement_system", &[])
         .with(AnimationSystem, "animation_system", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()

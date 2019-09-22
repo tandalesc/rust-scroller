@@ -15,14 +15,16 @@ use super::Physics;
 pub struct AnimationData {
     frames: Vec<usize>,
     time_per_frame: f32,
+    loop_anim: bool,
     pub animation_type: AnimationType
 }
 impl AnimationData {
-    pub fn new(frames: Vec<usize>, time_per_frame: f32, animation_type: AnimationType) -> AnimationData {
+    pub fn new(frames: Vec<usize>, time_per_frame: f32, animation_type: AnimationType, passed_loop: bool) -> AnimationData {
         AnimationData {
             frames: frames,
             time_per_frame: time_per_frame,
-            animation_type: animation_type
+            animation_type: animation_type,
+            loop_anim: passed_loop
         }
     }
 }
@@ -31,6 +33,8 @@ impl AnimationData {
 pub struct AnimationResource {
     pub player_idle: AnimationData,
     pub player_run: AnimationData,
+    pub player_jump: AnimationData,
+    pub player_attack_1: AnimationData
 }
 
 #[derive(Default, Debug)]
@@ -39,18 +43,25 @@ pub struct SpriteAnimation {
     current_frame: usize,
     time_per_frame: f32,
     elapsed_time: f32,
+    loop_anim: bool,
     pub animation_type: AnimationType
 }
 impl SpriteAnimation {
     pub fn from_data(animation_details: AnimationData) -> SpriteAnimation {
-        SpriteAnimation::new(animation_details.frames, animation_details.time_per_frame, animation_details.animation_type)
+        SpriteAnimation::new(
+            animation_details.frames,
+            animation_details.time_per_frame,
+            animation_details.animation_type,
+            animation_details.loop_anim
+        )
     }
-    pub fn new(frames: Vec<usize>, time_per_frame: f32, animation_type: AnimationType) -> SpriteAnimation {
+    pub fn new(frames: Vec<usize>, time_per_frame: f32, animation_type: AnimationType, passed_loop: bool) -> SpriteAnimation {
         SpriteAnimation {
             frames: frames,
             current_frame: 0,
             time_per_frame: time_per_frame,
             elapsed_time: 0.0,
+            loop_anim: passed_loop,
             animation_type: animation_type
         }
     }
@@ -66,6 +77,8 @@ impl Component for SpriteAnimation {
 pub enum AnimationType {
     Idle,
     Run,
+    Jump,
+    Attack1,
     Unset
 }
 impl Default for AnimationType {
@@ -86,15 +99,24 @@ impl <'a> System<'a> for AnimationSystem {
         for (physics, transform, sprite_render, anim) in (&physics_set, &mut transforms, &mut sprite_renders, &mut animations).join() {
             match anim.animation_type {
                 AnimationType::Idle => {
-                    if physics.velocity.x.abs() > 0.1 {
+                    if physics.is_jumping {
+                        *anim = SpriteAnimation::from_data(animation_resource.player_jump.clone());
+                    } else if physics.velocity.x.abs() > 0.1 {
                         *anim = SpriteAnimation::from_data(animation_resource.player_run.clone());
                     }
                 },
                 AnimationType::Run => {
-                    if physics.velocity.x.abs() < 0.1 {
+                    if physics.is_jumping {
+                        *anim = SpriteAnimation::from_data(animation_resource.player_jump.clone());
+                    } else if physics.velocity.x.abs() < 0.1 {
                         *anim = SpriteAnimation::from_data(animation_resource.player_idle.clone());
                     }
                 },
+                AnimationType::Jump => {
+                    if !physics.is_jumping {
+                        *anim = SpriteAnimation::from_data(animation_resource.player_idle.clone());
+                    }
+                }
                 _ => { /* Do nothing */ }
             };
             //rotate sprite depending on direction we're facing
@@ -105,7 +127,13 @@ impl <'a> System<'a> for AnimationSystem {
             }
             //progress each animation to the next frame
             anim.elapsed_time += time.delta_seconds();
-            let frame_count = (anim.elapsed_time / anim.time_per_frame) as usize % anim.frames.len();
+            let frame_count = if anim.loop_anim {
+                //use modulus to keep looping through valid range
+                (anim.elapsed_time / anim.time_per_frame) as usize % anim.frames.len()
+            } else {
+                //don't loop animation, just stop at the last frame
+                ((anim.elapsed_time / anim.time_per_frame) as usize).min(anim.frames.len()-1)
+            };
             if frame_count != anim.current_frame {
                 anim.current_frame = frame_count;
                 sprite_render.sprite_number = anim.get_frame();
