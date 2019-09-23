@@ -9,6 +9,7 @@ use amethyst::{
     core::timing::{Time}
 };
 
+use crate::character::Player;
 use super::Physics;
 
 #[derive(Clone, Default, Debug)]
@@ -34,7 +35,9 @@ pub struct AnimationResource {
     pub player_idle: AnimationData,
     pub player_run: AnimationData,
     pub player_jump: AnimationData,
-    pub player_attack_1: AnimationData
+    pub player_attack_0: AnimationData,
+    pub player_attack_1: AnimationData,
+    pub player_attack_2: AnimationData
 }
 
 #[derive(Default, Debug)]
@@ -44,6 +47,7 @@ pub struct SpriteAnimation {
     time_per_frame: f32,
     elapsed_time: f32,
     loop_anim: bool,
+    pub finished: bool,
     pub animation_type: AnimationType
 }
 impl SpriteAnimation {
@@ -62,6 +66,7 @@ impl SpriteAnimation {
             time_per_frame: time_per_frame,
             elapsed_time: 0.0,
             loop_anim: passed_loop,
+            finished: false,
             animation_type: animation_type
         }
     }
@@ -73,16 +78,18 @@ impl Component for SpriteAnimation {
     type Storage = VecStorage<Self>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AnimationType {
     Idle,
     Run,
     Jump,
-    Attack1,
-    Unset
+    Attack(u8)
 }
 impl Default for AnimationType {
-    fn default() -> Self { AnimationType::Unset }
+    fn default() -> Self { AnimationType::Idle }
+}
+impl Component for AnimationType {
+    type Storage = VecStorage<Self>;
 }
 
 pub struct AnimationSystem;
@@ -92,33 +99,35 @@ impl <'a> System<'a> for AnimationSystem {
         WriteStorage<'a, Transform>,
         WriteStorage<'a, SpriteRender>,
         WriteStorage<'a, SpriteAnimation>,
+        ReadStorage<'a, AnimationType>,
         Read<'a, AnimationResource>,
         Read<'a, Time>,
     );
-    fn run(&mut self, (physics_set, mut transforms, mut sprite_renders, mut animations, animation_resource, time): Self::SystemData) {
-        for (physics, transform, sprite_render, anim) in (&physics_set, &mut transforms, &mut sprite_renders, &mut animations).join() {
-            match anim.animation_type {
-                AnimationType::Idle => {
-                    if physics.is_jumping {
-                        *anim = SpriteAnimation::from_data(animation_resource.player_jump.clone());
-                    } else if physics.velocity.x.abs() > 0.1 {
-                        *anim = SpriteAnimation::from_data(animation_resource.player_run.clone());
+    fn run(&mut self, (physics_set, mut transforms, mut sprite_renders, mut animations, anim_types, animation_resource, time): Self::SystemData) {
+        for (physics, transform, sprite_render, anim, anim_type) in (&physics_set, &mut transforms, &mut sprite_renders, &mut animations, &anim_types).join() {
+            if anim.animation_type != *anim_type {
+                *anim = match anim_type {
+                    AnimationType::Idle => {
+                        SpriteAnimation::from_data(animation_resource.player_idle.clone())
+                    },
+                    AnimationType::Run => {
+                        SpriteAnimation::from_data(animation_resource.player_run.clone())
+                    },
+                    AnimationType::Jump => {
+                        SpriteAnimation::from_data(animation_resource.player_jump.clone())
+                    },
+                    AnimationType::Attack(combo) => {
+                        match combo {
+                            1 => SpriteAnimation::from_data(animation_resource.player_attack_1.clone()),
+                            2 => SpriteAnimation::from_data(animation_resource.player_attack_2.clone()),
+                            _ => SpriteAnimation::from_data(animation_resource.player_attack_0.clone())
+                        }
                     }
-                },
-                AnimationType::Run => {
-                    if physics.is_jumping {
-                        *anim = SpriteAnimation::from_data(animation_resource.player_jump.clone());
-                    } else if physics.velocity.x.abs() < 0.1 {
-                        *anim = SpriteAnimation::from_data(animation_resource.player_idle.clone());
+                    _ => {
+                        SpriteAnimation::from_data(animation_resource.player_idle.clone())
                     }
-                },
-                AnimationType::Jump => {
-                    if !physics.is_jumping {
-                        *anim = SpriteAnimation::from_data(animation_resource.player_idle.clone());
-                    }
-                }
-                _ => { /* Do nothing */ }
-            };
+                };
+            }
             //rotate sprite depending on direction we're facing
             if physics.velocity.x > 0.1 {
                 transform.set_rotation_y_axis(0.);
@@ -135,6 +144,9 @@ impl <'a> System<'a> for AnimationSystem {
                 ((anim.elapsed_time / anim.time_per_frame) as usize).min(anim.frames.len()-1)
             };
             if frame_count != anim.current_frame {
+                if !anim.finished && frame_count == anim.frames.len()-1 {
+                    anim.finished = true;
+                }
                 anim.current_frame = frame_count;
                 sprite_render.sprite_number = anim.get_frame();
             }

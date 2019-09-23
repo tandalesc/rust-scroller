@@ -32,22 +32,25 @@ use amethyst::{
 };
 
 mod animation;
+mod character;
+
+use crate::character::{Player, PlayerSystem};
 use crate::animation::{SpriteAnimation, AnimationSystem, AnimationType, AnimationData, AnimationResource};
 
 type Vector3 = na::Vector3<f32>;
 
 const SCALE_FACTOR: f32 = 3.;
 
-fn load_sprite_sheet(world: &World) -> Handle<SpriteSheet> {
+fn load_sprite_sheet(world: &World, file_name: &str) -> Handle<SpriteSheet> {
     let texture_handle = {
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-        loader.load("sprite_sheet.png", ImageFormat::default(), (), &texture_storage)
+        loader.load(format!("{}.png", file_name), ImageFormat::default(), (), &texture_storage)
     };
     let loader = world.read_resource::<Loader>();
     let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
     loader.load(
-        "sprite_sheet.ron",
+        format!("{}.ron", file_name),
         SpriteSheetFormat(texture_handle),
         (),
         &sprite_sheet_store
@@ -65,9 +68,10 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
         acceleration: Vector3::new(0.,0.,0.),
         velocity: Vector3::new(0.,0.,0.),
         mass: 1.,
-        friction: 0.4,
+        friction: 0.5,
         is_jumping: false
     };
+    let player = Player::new();
     let animation_data =  world.read_resource::<AnimationResource>().player_idle.clone();
     let animation = SpriteAnimation::from_data(animation_data);
     world.create_entity()
@@ -75,8 +79,9 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
         .with(sprite_transform)
         .with(animation)
         .with(physics)
+        .with(player)
+        .with(AnimationType::Idle)
         .with(Transparent)
-        .with(Player)
         .build();
 }
 
@@ -88,14 +93,14 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
     };
-    let physics = Physics::default();
-    let animation_data =  world.read_resource::<AnimationResource>().player_attack_1.clone();
+    let animation_data =  world.read_resource::<AnimationResource>().player_attack_0.clone();
     let animation = SpriteAnimation::from_data(animation_data);
     world.create_entity()
         .with(sprite_render)
         .with(sprite_transform)
         .with(animation)
-        .with(physics)
+        .with(Physics::default())
+        .with(AnimationType::Attack(0))
         .with(Transparent)
         .build();
 }
@@ -123,23 +128,19 @@ impl SimpleState for MyState {
         let mut world = data.world;
         world.add_resource(
             AnimationResource {
-                player_idle: AnimationData::new(vec![0,1,2,3], 1./10., AnimationType::Idle, true),
+                player_idle: AnimationData::new(vec![0,1,2,3], 1./8., AnimationType::Idle, true),
                 player_run: AnimationData::new(vec![4,5,6,7,8,9], 1./10., AnimationType::Run, true),
-                player_jump: AnimationData::new(vec![10,11,12,13], 1./10., AnimationType::Jump, false),
-                player_attack_1: AnimationData::new(vec![14,15,16,17,18], 1./10., AnimationType::Attack1, true)
+                player_jump: AnimationData::new(vec![10,11,12,13], 1./12., AnimationType::Jump, false),
+                player_attack_0: AnimationData::new(vec![14,15,16,17,18], 1./10., AnimationType::Attack(0), true),
+                player_attack_1: AnimationData::new(vec![19,20,21,22,23,24], 1./12., AnimationType::Attack(1), true),
+                player_attack_2: AnimationData::new(vec![25,26,27,28,29,30], 1./10., AnimationType::Attack(2), true)
             }
         );
-        let sprite_sheet_handle = load_sprite_sheet(&world);
-        init_player_sprite(&mut world, &sprite_sheet_handle);
-        init_enemy_sprite(&mut world, &sprite_sheet_handle);
+        let player_sprite_sheet_handle = load_sprite_sheet(&world, "sprite_sheet");
+        init_player_sprite(&mut world, &player_sprite_sheet_handle);
+        init_enemy_sprite(&mut world, &player_sprite_sheet_handle);
         init_camera(&mut world);
     }
-}
-
-#[derive(Default, Debug)]
-struct Player;
-impl Component for Player {
-    type Storage = NullStorage<Self>;
 }
 
 #[derive(Debug)]
@@ -199,20 +200,26 @@ impl <'a> System<'a> for PhysicsSystem {
 struct MovementSystem;
 impl <'a> System<'a> for MovementSystem {
     type SystemData = (
-        ReadStorage<'a, Player>,
+        WriteStorage<'a, Player>,
         WriteStorage<'a, Physics>,
-        Read<'a, InputHandler<StringBindings>>
+        Read<'a, InputHandler<StringBindings>>,
+        Read<'a, Time>
     );
-    fn run(&mut self, (player, mut physics_set, input): Self::SystemData) {
-        let (rx, ry) = (
-            input.axis_value("r_x").unwrap(),
-            input.axis_value("r_y").unwrap()
+    fn run(&mut self, (mut players, mut physics_set, input, time): Self::SystemData) {
+        let dt = time.delta_seconds();
+        let (cx, cy, attack, jump) = (
+            input.axis_value("x").unwrap(),
+            input.axis_value("y").unwrap(),
+            input.action_is_down("attack").unwrap(),
+            input.action_is_down("jump").unwrap()
         );
-        for (_, physics) in (&player, &mut physics_set).join() {
-            physics.acceleration.x = rx as f32 * 10.;
-            if ry == 1. && physics.is_jumping == false {
+        for (player, physics) in (&mut players, &mut physics_set).join() {
+            physics.acceleration.x = cx as f32 * 10.;
+            if attack && !player.is_attacking && !physics.is_jumping  {
+                player.is_attacking = true;
+            } else if jump && !physics.is_jumping {
                 physics.is_jumping = true;
-                physics.velocity.y = 5.0;
+                physics.velocity.y = 5.;
             }
         }
     }
@@ -233,8 +240,9 @@ fn main() -> amethyst::Result<()> {
             InputBundle::<StringBindings>::new()
                 .with_bindings_from_file(config_dir.join("input.ron"))?
         )?
-        .with(PhysicsSystem, "physics_system", &[])
         .with(MovementSystem, "movement_system", &[])
+        .with(PhysicsSystem, "physics_system", &[])
+        .with(PlayerSystem, "player_system", &[])
         .with(AnimationSystem, "animation_system", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()

@@ -5,22 +5,17 @@
 
 (
     axes: {
-        "l_x": Emulated(
-            pos: Key(D),
-            neg: Key(A),
-        ),
-        "l_y": Emulated(
-            pos: Key(W),
-            neg: Key(S),
-        ),
-        "r_x": Emulated(
+        "x": Emulated(
             pos: Key(Right),
             neg: Key(Left),
         ),
-        "r_y": Emulated(
+        "y": Emulated(
             pos: Key(Up),
             neg: Key(Down),
         ),
     },
-    actions: {},
+    actions: {
+      "attack": [ [Key(X)] ],
+      "jump": [ [Key(Z)], [Key(Space)] ]
+    },
 )
