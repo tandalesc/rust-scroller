@@ -193,6 +193,31 @@
         y: 547,
         width: 50,
         height: 37,
-    )
+    ),
+    //jump smrslt animation
+    ( //31
+        x: 53,
+        y: 1678,
+        width: 50,
+        height: 37,
+    ),
+    ( //32
+        x: 1,
+        y: 1717,
+        width: 50,
+        height: 37,
+    ),
+    ( //33
+        x: 53,
+        y: 1717,
+        width: 50,
+        height: 37,
+    ),
+    ( //34
+        x: 1,
+        y: 1756,
+        width: 50,
+        height: 37,
+    ),
   ],
 )

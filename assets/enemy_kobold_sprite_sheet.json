@@ -1,0 +1,260 @@
+{"frames": {
+
+"kobold-attack-00":
+{
+	"frame": {"x":1,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-attack-01":
+{
+	"frame": {"x":1,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-attack-02":
+{
+	"frame": {"x":1,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-attack-03":
+{
+	"frame": {"x":71,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-attack-04":
+{
+	"frame": {"x":71,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-00":
+{
+	"frame": {"x":71,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-01":
+{
+	"frame": {"x":141,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-02":
+{
+	"frame": {"x":141,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-03":
+{
+	"frame": {"x":141,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-04":
+{
+	"frame": {"x":211,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-05":
+{
+	"frame": {"x":211,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-die-06":
+{
+	"frame": {"x":211,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-fall-00":
+{
+	"frame": {"x":281,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-fall-01":
+{
+	"frame": {"x":281,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-hurt-00":
+{
+	"frame": {"x":281,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-hurt-01":
+{
+	"frame": {"x":351,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-hurt-02":
+{
+	"frame": {"x":351,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-idle-00":
+{
+	"frame": {"x":351,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-idle-01":
+{
+	"frame": {"x":421,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-idle-02":
+{
+	"frame": {"x":421,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-idle-03":
+{
+	"frame": {"x":421,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-jump-loop-00":
+{
+	"frame": {"x":491,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-jump-loop-01":
+{
+	"frame": {"x":491,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-jump-ready-00":
+{
+	"frame": {"x":491,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-jump-ready-01":
+{
+	"frame": {"x":561,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-run-00":
+{
+	"frame": {"x":561,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-run-01":
+{
+	"frame": {"x":561,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-run-02":
+{
+	"frame": {"x":631,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-run-03":
+{
+	"frame": {"x":631,"y":38,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-run-04":
+{
+	"frame": {"x":631,"y":75,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+},
+"kobold-run-05":
+{
+	"frame": {"x":701,"y":1,"w":68,"h":35},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":68,"h":35},
+	"sourceSize": {"w":68,"h":35}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "enemy_kobold_sprite_sheet.png",
+	"format": "RGBA8888",
+	"size": {"w":770,"h":111},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:d9eb43bdd6b9a6509751f4888b6bfc09:c64e9f28f71ccafcf893e8b4f56e0141:4119d9009d7eeaa3b7da967dc79d83e7$"
+}
+}

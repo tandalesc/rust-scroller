@@ -1,14 +1,28 @@
 
 use amethyst::{
     core::{
-        timing::{Time}
+        timing::{Time},
+        transform::{Transform}
     },
     ecs::{Component, System, Join, VecStorage, NullStorage},
     ecs::prelude::{Read, ReadStorage, WriteStorage}
 };
 
-use super::Physics;
-use crate::animation::{SpriteAnimation, AnimationResource, AnimationType};
+use crate::gamestate::{Physics};
+use crate::animation::{SpriteAnimation, AnimationType};
+
+pub enum CharacterType {
+    Player,
+    Enemy
+}
+impl Component for CharacterType {
+    type Storage = VecStorage<Self>;
+}
+impl Default for CharacterType {
+    fn default() -> CharacterType {
+        CharacterType::Enemy
+    }
+}
 
 #[derive(Default, Debug)]
 pub struct Player {
@@ -32,15 +46,16 @@ impl Component for Player {
 pub struct PlayerSystem;
 impl <'a> System<'a> for PlayerSystem {
     type SystemData = (
+        ReadStorage<'a, Transform>,
         ReadStorage<'a, Physics>,
         WriteStorage<'a, Player>,
         WriteStorage<'a, AnimationType>,
         ReadStorage<'a, SpriteAnimation>,
         Read<'a, Time>,
     );
-    fn run(&mut self, (physics_set, mut players, mut anim_types, animations, time): Self::SystemData) {
+    fn run(&mut self, (transforms, physics_set, mut players, mut anim_types, animations, time): Self::SystemData) {
         let dt = time.delta_seconds();
-        for (physics, player, anim_type, anim) in (&physics_set, &mut players, &mut anim_types, &animations).join() {
+        for (transform, physics, player, anim_type, anim) in (&transforms, &physics_set, &mut players, &mut anim_types, &animations).join() {
             let mut new_anim_type = anim_type.clone();
             match *anim_type {
                 AnimationType::Idle => {
@@ -49,7 +64,7 @@ impl <'a> System<'a> for PlayerSystem {
                         new_anim_type = AnimationType::Attack(new_combo);
                         player.attack_combo = new_combo;
                     } else if physics.is_jumping {
-                        new_anim_type = AnimationType::Jump;
+                        new_anim_type = AnimationType::Jump(false, false);
                     } else if physics.velocity.x.abs() > 0.1 {
                         new_anim_type = AnimationType::Run;
                     }
@@ -67,14 +82,16 @@ impl <'a> System<'a> for PlayerSystem {
                         new_anim_type = AnimationType::Attack(new_combo);
                         player.attack_combo = new_combo;
                     } else if physics.is_jumping {
-                        new_anim_type = AnimationType::Jump;
+                        new_anim_type = AnimationType::Jump(false, true);
                     } else if physics.velocity.x.abs() < 0.1 {
                         new_anim_type = AnimationType::Idle;
                     }
                 },
-                AnimationType::Jump => {
+                AnimationType::Jump(falling, running) => {
                     if !physics.is_jumping {
                         new_anim_type = AnimationType::Idle;
+                    } else if !falling && physics.velocity.y < 0. {
+                        new_anim_type = AnimationType::Jump(true, running);
                     }
                 }
             }

@@ -1,0 +1,99 @@
+(
+  texture_width: 770,
+  texture_height: 111,
+  sprites: [
+    //idle animation
+    ( //0
+        x: 351,
+        y: 75,
+        width: 68,
+        height: 35
+    ),
+    ( //1
+        x: 421,
+        y: 1,
+        width: 68,
+        height: 35,
+    ),
+    ( //2
+        x: 421,
+        y: 38,
+        width: 68,
+        height: 35,
+    ),
+    ( //3
+        x: 421,
+        y: 75,
+        width: 68,
+        height: 35,
+    ),
+    //run animation
+    ( //4
+        x: 561,
+        y: 38,
+        width: 68,
+        height: 35,
+    ),
+    ( //5
+        x: 561,
+        y: 75,
+        width: 68,
+        height: 35,
+    ),
+    ( //6
+        x: 631,
+        y: 1,
+        width: 68,
+        height: 35,
+    ),
+    ( //7
+        x: 631,
+        y: 38,
+        width: 68,
+        height: 35,
+    ),
+    ( //8
+        x: 631,
+        y: 75,
+        width: 68,
+        height: 35,
+    ),
+    ( //9
+        x: 701,
+        y: 1,
+        width: 68,
+        height: 35,
+    ),
+    //attack animation
+    ( //10
+        x: 1,
+        y: 1,
+        width: 68,
+        height: 35,
+    ),
+    ( //11
+        x: 1,
+        y: 38,
+        width: 68,
+        height: 35,
+    ),
+    ( //12
+        x: 1,
+        y: 75,
+        width: 68,
+        height: 35,
+    ),
+    ( //13
+        x: 71,
+        y: 1,
+        width: 68,
+        height: 35,
+    ),
+    ( //14
+        x: 71,
+        y: 38,
+        width: 68,
+        height: 35,
+    ),
+  ],
+)

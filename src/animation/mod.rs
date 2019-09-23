@@ -9,8 +9,8 @@ use amethyst::{
     core::timing::{Time}
 };
 
-use crate::character::Player;
-use super::Physics;
+use crate::character::{CharacterType};
+use crate::gamestate::{Physics};
 
 #[derive(Clone, Default, Debug)]
 pub struct AnimationData {
@@ -30,14 +30,37 @@ impl AnimationData {
     }
 }
 
-#[derive(Default, Debug)]
-pub struct AnimationResource {
-    pub player_idle: AnimationData,
-    pub player_run: AnimationData,
-    pub player_jump: AnimationData,
-    pub player_attack_0: AnimationData,
-    pub player_attack_1: AnimationData,
-    pub player_attack_2: AnimationData
+#[derive(Default, Debug, PartialEq)]
+pub struct AnimationResource;
+impl AnimationResource {
+    pub fn data(&self, char_type: &CharacterType, anim_type: &AnimationType) -> AnimationData {
+        match char_type {
+            //default implementation - temp for enemy
+            CharacterType::Player => { match anim_type {
+                AnimationType::Idle => AnimationData::new(vec![0,1,2,3], 1./6., AnimationType::Idle, true),
+                AnimationType::Run => AnimationData::new(vec![4,5,6,7,8,9], 1./10., AnimationType::Run, true),
+                AnimationType::Jump(falling, running) => { match running {
+                    true => AnimationData::new(vec![31,32,33,34], 1./10., AnimationType::Jump(*falling, true), true),
+                    false => match falling {
+                        false => AnimationData::new(vec![10,11,12,13], 1./10., AnimationType::Jump(false, *running), false),
+                        true => AnimationData::new(vec![13,12,11], 1./10., AnimationType::Jump(true, *running), false)
+                    }
+                } },
+                AnimationType::Attack(combo) => { match combo {
+                    1 => AnimationData::new(vec![19,20,21,22,23,24], 1./10., AnimationType::Attack(1), true),
+                    2 => AnimationData::new(vec![25,26,27,28,29,30], 1./10., AnimationType::Attack(2), true),
+                    _ => AnimationData::new(vec![14,15,16,17,18], 1./10., AnimationType::Attack(*combo), true)
+                } },
+                _ => AnimationData::new(vec![0,1,2,3], 1./6., anim_type.clone(), true), //default to idle animation
+            } },
+            CharacterType::Enemy => { match anim_type {
+                AnimationType::Idle => AnimationData::new(vec![0,1,2,3], 1./6., AnimationType::Idle, true),
+                AnimationType::Run => AnimationData::new(vec![4,5,6,7,8,9], 1./10., AnimationType::Run, true),
+                AnimationType::Attack(combo) => AnimationData::new(vec![10,11,12,13,14], 1./10., AnimationType::Attack(*combo), true),
+                _ => AnimationData::new(vec![0,1,2,3], 1./6., anim_type.clone(), true) //default to idle animation
+            } }
+        }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -82,7 +105,7 @@ impl Component for SpriteAnimation {
 pub enum AnimationType {
     Idle,
     Run,
-    Jump,
+    Jump(bool, bool),
     Attack(u8)
 }
 impl Default for AnimationType {
@@ -96,6 +119,7 @@ pub struct AnimationSystem;
 impl <'a> System<'a> for AnimationSystem {
     type SystemData = (
         ReadStorage<'a, Physics>,
+        ReadStorage<'a, CharacterType>,
         WriteStorage<'a, Transform>,
         WriteStorage<'a, SpriteRender>,
         WriteStorage<'a, SpriteAnimation>,
@@ -103,30 +127,11 @@ impl <'a> System<'a> for AnimationSystem {
         Read<'a, AnimationResource>,
         Read<'a, Time>,
     );
-    fn run(&mut self, (physics_set, mut transforms, mut sprite_renders, mut animations, anim_types, animation_resource, time): Self::SystemData) {
-        for (physics, transform, sprite_render, anim, anim_type) in (&physics_set, &mut transforms, &mut sprite_renders, &mut animations, &anim_types).join() {
+    fn run(&mut self, (physics_set, character_types, mut transforms, mut sprite_renders, mut animations, anim_types, animation_resource, time): Self::SystemData) {
+        for (physics, char_type, transform, sprite_render, anim, anim_type) in (&physics_set, &character_types, &mut transforms, &mut sprite_renders, &mut animations, &anim_types).join() {
+            //create a new sprite object only if the animation has changed
             if anim.animation_type != *anim_type {
-                *anim = match anim_type {
-                    AnimationType::Idle => {
-                        SpriteAnimation::from_data(animation_resource.player_idle.clone())
-                    },
-                    AnimationType::Run => {
-                        SpriteAnimation::from_data(animation_resource.player_run.clone())
-                    },
-                    AnimationType::Jump => {
-                        SpriteAnimation::from_data(animation_resource.player_jump.clone())
-                    },
-                    AnimationType::Attack(combo) => {
-                        match combo {
-                            1 => SpriteAnimation::from_data(animation_resource.player_attack_1.clone()),
-                            2 => SpriteAnimation::from_data(animation_resource.player_attack_2.clone()),
-                            _ => SpriteAnimation::from_data(animation_resource.player_attack_0.clone())
-                        }
-                    }
-                    _ => {
-                        SpriteAnimation::from_data(animation_resource.player_idle.clone())
-                    }
-                };
+                *anim = SpriteAnimation::from_data(animation_resource.data(char_type, anim_type));
             }
             //rotate sprite depending on direction we're facing
             if physics.velocity.x > 0.1 {
