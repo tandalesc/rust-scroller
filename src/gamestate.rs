@@ -1,7 +1,7 @@
 use amethyst::{
     assets::{AssetStorage, Loader, Handle},
     core::{
-        math as na,
+        math::{self as na, Isometry3},
         timing::{Time},
         transform::{Transform}
     },
@@ -22,6 +22,13 @@ use amethyst::{
         Texture, Transparent
     },
     window::ScreenDimensions
+};
+use specs_physics::{
+    SimplePosition,
+    colliders::Shape,
+    nphysics::{algebra::Velocity3, object::BodyStatus},
+    PhysicsBodyBuilder,
+    PhysicsColliderBuilder
 };
 
 use crate::character::{Player, CharacterType};
@@ -48,8 +55,9 @@ fn load_sprite_sheet(world: &World, file_name: &str) -> Handle<SpriteSheet> {
 }
 
 fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
-    let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(30., 30., 0.);
+    let transform = SimplePosition::<f32>(Isometry3::<f32>::translation(
+        30., 30., 0.
+    ));
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
@@ -60,9 +68,10 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
     let animation = SpriteAnimation::from_data(animation_data);
     world.create_entity()
         .with(sprite_render)
-        .with(sprite_transform)
         .with(animation)
-        .with(Physics::default())
+        .with(transform)
+        .with(PhysicsBodyBuilder::<f32>::from(BodyStatus::Dynamic).build())
+        //.with(PhysicsColliderBuilder::<f32>::from(Shape::Rectangle(0.5, 0.5, 0.5)).build())
         .with(Player::new())
         .with(char_type)
         .with(anim_type)
@@ -71,8 +80,9 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
 }
 
 fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
-    let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(200., 30., 0.);
+    let transform = SimplePosition::<f32>(Isometry3::<f32>::translation(
+        100., 30., 0.
+    ));
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
@@ -83,9 +93,10 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
     let animation = SpriteAnimation::from_data(animation_data);
     world.create_entity()
         .with(sprite_render)
-        .with(sprite_transform)
         .with(animation)
-        .with(Physics::default())
+        .with(transform)
+        .with(PhysicsBodyBuilder::<f32>::from(BodyStatus::Dynamic).build())
+        //.with(PhysicsColliderBuilder::<f32>::from(Shape::Rectangle(0.5, 0.5, 0.5)).build())
         .with(char_type)
         .with(anim_type)
         .with(Transparent)
@@ -145,49 +156,14 @@ impl Default for Physics {
     }
 }
 
-pub struct PhysicsSystem;
-impl <'a> System<'a> for PhysicsSystem {
-    type SystemData = (
-        WriteStorage<'a, Physics>,
-        WriteStorage<'a, Transform>,
-        Read<'a, Time>
-    );
-    fn run(&mut self, (mut physics_set, mut transform, time): Self::SystemData) {
-        let dt = time.delta_seconds();
-        for (physics, transform) in (&mut physics_set, &mut transform).join() {
-            if transform.translation().y > 20. || physics.velocity.y > 0. {
-                physics.acceleration.y = -9.8;
-                physics.velocity.y += physics.acceleration.y*dt;
-            } else if physics.is_jumping {
-                //we hit the ground, reset jumping flag
-                physics.is_jumping = false;
-                physics.jump_cooldown = 5; //5 frames
-                physics.acceleration.y = 0.;
-                physics.velocity.y = 0.;
-            }
-            if physics.jump_cooldown > 0 {
-                physics.jump_cooldown -= 1;
-            }
-            physics.velocity.x += physics.acceleration.x*dt;
-            physics.velocity.x -= physics.velocity.x*physics.friction*9.8*dt;
-            //clamp translation so new coordinates are always on the screen
-            let mut new_translation = transform.translation() + physics.velocity;
-            new_translation.x = new_translation.x.min(800./SCALE_FACTOR).max(0.);
-            new_translation.y = new_translation.y.min(600./SCALE_FACTOR).max(20.);
-            transform.set_translation(new_translation);
-        }
-    }
-}
-
 pub struct MovementSystem;
 impl <'a> System<'a> for MovementSystem {
     type SystemData = (
         WriteStorage<'a, Player>,
-        WriteStorage<'a, Physics>,
         Read<'a, InputHandler<StringBindings>>,
         Read<'a, Time>
     );
-    fn run(&mut self, (mut players, mut physics_set, input, time): Self::SystemData) {
+    fn run(&mut self, (mut players, input, time): Self::SystemData) {
         let dt = time.delta_seconds();
         let (cx, cy, attack, jump) = (
             input.axis_value("x").unwrap(),
@@ -195,14 +171,14 @@ impl <'a> System<'a> for MovementSystem {
             input.action_is_down("attack").unwrap(),
             input.action_is_down("jump").unwrap()
         );
-        for (player, physics) in (&mut players, &mut physics_set).join() {
-            physics.acceleration.x = cx as f32 * 12.;
+        for (player) in (&mut players).join() {
+            //physics.acceleration.x = cx as f32 * 12.;
             if attack && !player.is_attacking  {
                 player.is_attacking = true;
-            } else if jump && !physics.is_jumping && !player.is_attacking && physics.jump_cooldown == 0 {
-                physics.is_jumping = true;
-                physics.velocity.y = 4.;
-            }
+            } //else if jump && !physics.is_jumping && !player.is_attacking && physics.jump_cooldown == 0 {
+            //    physics.is_jumping = true;
+            //    physics.velocity.y = 4.;
+            //}
         }
     }
 }

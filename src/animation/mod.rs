@@ -1,6 +1,7 @@
 
 use amethyst::{
     core::{
+        math as na,
         transform::{Transform}
     },
     ecs::{Component, System, Join, VecStorage},
@@ -8,6 +9,15 @@ use amethyst::{
     renderer::{SpriteRender},
     core::timing::{Time}
 };
+use specs_physics::{
+    SimplePosition,
+    bodies::{
+        PhysicsBody
+    }
+};
+
+type Vector3 = na::Vector3<f32>;
+type UnitQuaternion = na::UnitQuaternion<f32>;
 
 use crate::character::{CharacterType};
 use crate::gamestate::{Physics};
@@ -118,26 +128,18 @@ impl Component for AnimationType {
 pub struct AnimationSystem;
 impl <'a> System<'a> for AnimationSystem {
     type SystemData = (
-        ReadStorage<'a, Physics>,
         ReadStorage<'a, CharacterType>,
-        WriteStorage<'a, Transform>,
         WriteStorage<'a, SpriteRender>,
         WriteStorage<'a, SpriteAnimation>,
         ReadStorage<'a, AnimationType>,
         Read<'a, AnimationResource>,
         Read<'a, Time>,
     );
-    fn run(&mut self, (physics_set, character_types, mut transforms, mut sprite_renders, mut animations, anim_types, animation_resource, time): Self::SystemData) {
-        for (physics, char_type, transform, sprite_render, anim, anim_type) in (&physics_set, &character_types, &mut transforms, &mut sprite_renders, &mut animations, &anim_types).join() {
+    fn run(&mut self, (character_types, mut sprite_renders, mut animations, anim_types, animation_resource, time): Self::SystemData) {
+        for (char_type, sprite_render, anim, anim_type) in (&character_types, &mut sprite_renders, &mut animations, &anim_types).join() {
             //create a new sprite object only if the animation has changed
             if anim.animation_type != *anim_type {
                 *anim = SpriteAnimation::from_data(animation_resource.data(char_type, anim_type));
-            }
-            //rotate sprite depending on direction we're facing
-            if physics.velocity.x > 0.1 {
-                transform.set_rotation_y_axis(0.);
-            } else if physics.velocity.x < -0.1 {
-                transform.set_rotation_y_axis(std::f32::consts::PI);
             }
             //progress each animation to the next frame
             anim.elapsed_time += time.delta_seconds();
