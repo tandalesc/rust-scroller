@@ -1,10 +1,9 @@
 
 use amethyst::{
     core::{
-        timing::{Time},
-        transform::{Transform}
+        timing::{Time}
     },
-    ecs::{Component, System, Join, VecStorage, NullStorage},
+    ecs::{Component, System, Join, VecStorage},
     ecs::prelude::{Read, ReadStorage, WriteStorage}
 };
 
@@ -46,16 +45,15 @@ impl Component for Player {
 pub struct PlayerSystem;
 impl <'a> System<'a> for PlayerSystem {
     type SystemData = (
-        ReadStorage<'a, Transform>,
         ReadStorage<'a, Physics>,
         WriteStorage<'a, Player>,
         WriteStorage<'a, AnimationType>,
         ReadStorage<'a, SpriteAnimation>,
         Read<'a, Time>,
     );
-    fn run(&mut self, (transforms, physics_set, mut players, mut anim_types, animations, time): Self::SystemData) {
+    fn run(&mut self, (physics_set, mut players, mut anim_types, animations, time): Self::SystemData) {
         let dt = time.delta_seconds();
-        for (transform, physics, player, anim_type, anim) in (&transforms, &physics_set, &mut players, &mut anim_types, &animations).join() {
+        for (physics, player, anim_type, anim) in (&physics_set, &mut players, &mut anim_types, &animations).join() {
             let mut new_anim_type = anim_type.clone();
             match *anim_type {
                 AnimationType::Idle => {
@@ -69,7 +67,7 @@ impl <'a> System<'a> for PlayerSystem {
                         new_anim_type = AnimationType::Run;
                     }
                 },
-                AnimationType::Attack(combo) => {
+                AnimationType::Attack(_) => {
                     if anim.finished {
                         new_anim_type = AnimationType::Idle;
                         player.attack_timer = 1.;

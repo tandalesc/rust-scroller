@@ -1,6 +1,6 @@
 
 use amethyst::{
-    assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
+    assets::{AssetStorage, Handle, Loader, ProgressCounter},
     prelude::*,
     renderer::{
         formats::texture::ImageFormat,
@@ -10,7 +10,6 @@ use amethyst::{
 };
 
 use std::fs;
-use std::path::Path;
 use std::collections::HashMap;
 
 use crate::state::main_state::{GameState};
@@ -42,11 +41,10 @@ pub fn load_tile_set(world: &World, file_name: &str, tile_map_data: &TileMapData
     let loader = world.read_resource::<Loader>();
     let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
 
-    let (tile_width, tile_height, img_width, img_height, map_width, map_height) = (
+    let (tile_width, tile_height, img_width, img_height) = (
         tile_map_data.tilewidth as u32, tile_map_data.tileheight as u32,
         //tile_map_data.width as u32, tile_map_data.height as u32
-        160, 224,
-        tile_map_data.width as u32, tile_map_data.height as u32,
+        160, 224
     );
     let sprites_x = img_width/tile_width;
     let sprites_y = img_height/tile_height;

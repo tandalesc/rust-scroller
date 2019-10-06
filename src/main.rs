@@ -29,7 +29,6 @@ use crate::animation::{
     AnimationSystem
 };
 use crate::state::{
-    GameState,
     LoadMapState
 };
 

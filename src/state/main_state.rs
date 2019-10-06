@@ -1,32 +1,18 @@
 
 use amethyst::{
-    assets::{AssetStorage, Loader, Handle},
+    assets::{Handle},
     core::{
-        math as na,
-        timing::{Time},
         transform::{Transform}
     },
-    ecs::{Entity, Component, System, Join, VecStorage, NullStorage},
-    ecs::prelude::{
-        Read,
-        ReadStorage,
-        WriteStorage,
-        Resources
-    },
-    input::{InputHandler, StringBindings},
     prelude::*,
     renderer::{
         Camera,
-        ImageFormat,
-        SpriteSheetFormat, Sprite,
         SpriteRender, SpriteSheet,
-        Texture, Transparent
+        Transparent
     },
     window::ScreenDimensions
 };
 
-use std::fs;
-use std::path::Path;
 use std::collections::HashMap;
 
 use crate::gamestate::{Physics};

@@ -1,32 +1,18 @@
 use amethyst::{
-    assets::{AssetStorage, Loader, Handle},
     core::{
         math as na,
         timing::{Time},
         transform::{Transform}
     },
-    ecs::{Entity, Component, System, Join, VecStorage, NullStorage},
+    ecs::{Component, System, Join, VecStorage},
     ecs::prelude::{
         Read,
-        ReadStorage,
-        WriteStorage,
-        Resources
+        WriteStorage
     },
     input::{InputHandler, StringBindings},
-    prelude::*,
-    renderer::{
-        Camera,
-        ImageFormat,
-        SpriteSheetFormat, Sprite,
-        SpriteRender, SpriteSheet,
-        Texture, Transparent
-    },
-    window::ScreenDimensions
 };
 
-use crate::character::{Player, CharacterType};
-use crate::animation::{SpriteAnimation, AnimationType, AnimationResource};
-use crate::tilemap::{TileMapData};
+use crate::character::{Player};
 use crate::state::{SCALE_FACTOR};
 
 type Vector3 = na::Vector3<f32>;
@@ -95,12 +81,10 @@ impl <'a> System<'a> for MovementSystem {
     type SystemData = (
         WriteStorage<'a, Player>,
         WriteStorage<'a, Physics>,
-        Read<'a, InputHandler<StringBindings>>,
-        Read<'a, Time>
+        Read<'a, InputHandler<StringBindings>>
     );
-    fn run(&mut self, (mut players, mut physics_set, input, time): Self::SystemData) {
-        let dt = time.delta_seconds();
-        let (cx, cy, attack, jump) = (
+    fn run(&mut self, (mut players, mut physics_set, input): Self::SystemData) {
+        let (cx, _cy, attack, jump) = (
             input.axis_value("x").unwrap(),
             input.axis_value("y").unwrap(),
             input.action_is_down("attack").unwrap(),

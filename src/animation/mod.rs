@@ -50,8 +50,7 @@ impl AnimationResource {
                     1 => AnimationData::new(vec![19,20,21,22,23,24], 1./10., AnimationType::Attack(1), true),
                     2 => AnimationData::new(vec![25,26,27,28,29,30], 1./10., AnimationType::Attack(2), true),
                     _ => AnimationData::new(vec![14,15,16,17,18], 1./10., AnimationType::Attack(*combo), true)
-                } },
-                _ => AnimationData::new(vec![0,1,2,3], 1./6., anim_type.clone(), true), //default to idle animation
+                } }
             } },
             CharacterType::Enemy => { match anim_type {
                 AnimationType::Idle => AnimationData::new(vec![0,1,2,3], 1./6., AnimationType::Idle, true),

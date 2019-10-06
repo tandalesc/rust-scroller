@@ -1,6 +1,5 @@
 
 use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TileMapData {
