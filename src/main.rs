@@ -15,9 +15,10 @@ use amethyst::{
 mod gamestate;
 mod animation;
 mod character;
+mod tilemap;
+mod state;
 
 use crate::gamestate::{
-    GameState,
     MovementSystem,
     PhysicsSystem
 };
@@ -26,6 +27,10 @@ use crate::character::{
 };
 use crate::animation::{
     AnimationSystem
+};
+use crate::state::{
+    GameState,
+    LoadMapState
 };
 
 fn main() -> amethyst::Result<()> {
@@ -56,7 +61,7 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderFlat2D::default()),
         )?;
 
-    let mut game = Application::new(assets_dir, GameState, game_data)?;
+    let mut game = Application::new(assets_dir, LoadMapState::new(), game_data)?;
     game.run();
 
     Ok(())
