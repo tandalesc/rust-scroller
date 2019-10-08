@@ -43,13 +43,12 @@ pub fn load_tile_set(world: &World, file_name: &str, tile_map_data: &TileMapData
 
     let (tile_width, tile_height, img_width, img_height) = (
         tile_map_data.tilewidth as u32, tile_map_data.tileheight as u32,
-        //tile_map_data.width as u32, tile_map_data.height as u32
         160, 224
     );
     let sprites_x = img_width/tile_width;
     let sprites_y = img_height/tile_height;
     let sprite_count = (sprites_x*sprites_y) as usize;
-    let offsets = [4.0; 2]; //origin point is top-left corner
+    let offsets = [4.; 2]; //origin point is top-left corner
     let mut sprites = Vec::with_capacity(sprite_count);
 
     //tile maps are just sprites with regularily-spaced sprites
@@ -119,6 +118,7 @@ impl SimpleState for LoadMapState {
                 tile_map_data: self.tile_map_data.clone(),
                 tile_set_handles: self.tile_set_handles.clone(),
                 sprite_handles: self.sprite_handles.clone(),
+                map_entities: Vec::new()
             }))
         } else {
             Trans::None

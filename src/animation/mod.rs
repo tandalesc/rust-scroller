@@ -3,7 +3,7 @@ use amethyst::{
     core::{
         transform::{Transform}
     },
-    ecs::{Component, System, Join, VecStorage},
+    ecs::{Component, System, Join, DenseVecStorage, VecStorage},
     ecs::prelude::{Read, ReadStorage, WriteStorage},
     renderer::{SpriteRender},
     core::timing::{Time}
@@ -97,7 +97,7 @@ impl SpriteAnimation {
     }
 }
 impl Component for SpriteAnimation {
-    type Storage = VecStorage<Self>;
+    type Storage = DenseVecStorage<Self>;
 }
 
 #[derive(Debug, Clone, PartialEq)]

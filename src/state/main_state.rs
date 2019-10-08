@@ -4,6 +4,7 @@ use amethyst::{
     core::{
         transform::{Transform}
     },
+    ecs::{Entity},
     prelude::*,
     renderer::{
         Camera,
@@ -20,7 +21,7 @@ use crate::character::{Player, CharacterType};
 use crate::animation::{SpriteAnimation, AnimationType, AnimationResource};
 use crate::tilemap::{TileMapData};
 
-pub const SCALE_FACTOR: f32 = 4.;
+pub const SCALE_FACTOR: f32 = 3.;
 
 fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
@@ -69,12 +70,13 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
 
 fn init_camera(world: &mut World) {
     let (width, height) = {
-        let dim = world.read_resource::<ScreenDimensions>();
-        (dim.width()/SCALE_FACTOR, dim.height()/SCALE_FACTOR)
+        //let dim = world.read_resource::<ScreenDimensions>();
+        //(dim.width(), dim.height())
+        (320., 240.)
     };
 
     let mut transform = Transform::default();
-    transform.set_translation_xyz(width/2., height/2., 1.);
+    transform.set_translation_xyz(width/2., height/2., 20.);
     let camera = Camera::standard_2d(width, height);
     world.create_entity()
         .with(camera)
@@ -86,7 +88,8 @@ fn init_camera(world: &mut World) {
 pub struct GameState {
     pub tile_map_data: TileMapData,
     pub tile_set_handles: HashMap<usize, Handle<SpriteSheet>>,
-    pub sprite_handles: HashMap<String, Handle<SpriteSheet>>
+    pub sprite_handles: HashMap<String, Handle<SpriteSheet>>,
+    pub map_entities: Vec<Entity>,
 }
 impl SimpleState for GameState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
@@ -96,37 +99,41 @@ impl SimpleState for GameState {
         init_enemy_sprite(&mut world, &self.sprite_handles.get("enemy_kobold_sprite_sheet").unwrap());
         init_camera(&mut world);
 
-        let (tile_width, tile_height) = (
+        let (map_width, map_height, tile_width, tile_height) = (
+            self.tile_map_data.width, self.tile_map_data.height,
             self.tile_map_data.tilewidth, self.tile_map_data.tileheight
         );
 
         for layer in &self.tile_map_data.layers {
             for i in 0..layer.data.len() {
-                //need to identify which map this tile belongs to
-                let sprite_number = *layer.data.get(i).unwrap();
-                if sprite_number > 0 {
-                    let (x, y) = ((i%layer.width*tile_width) as f32, (i/layer.width*tile_height) as f32);
+                let tile = *layer.data.get(i).unwrap();
+                if tile > 0 {
+                    let (x, y) = (
+                        (i%map_width*tile_width) as f32, (i/map_width*tile_height) as f32
+                    );
                     let mut sprite_transform = Transform::default();
                     sprite_transform.set_translation_xyz(
-                        x, (layer.height*tile_height) as f32 - y, -1.
+                        x, (map_height*tile_height) as f32 - y, -1.
                     );
                     //find greatest map start index that is less than sprite_number
-                    let map_start_index = self.tile_set_handles.keys()
-                        .filter(|&k| k <= &sprite_number)
-                        .fold(1, |acc, &k| if k>acc { k } else { acc });
-                    let sprite_render = SpriteRender {
-                        sprite_sheet: self.tile_set_handles.get(&map_start_index).unwrap().clone(),
-                        sprite_number: (sprite_number-map_start_index) as usize
+                    let sprite_render = {
+                        let map_start_index = self.tile_set_handles.keys()
+                            .filter(|&k| k <= &tile)
+                            .fold(1, |acc, &k| if k>acc { k } else { acc });
+                        SpriteRender {
+                            sprite_sheet: self.tile_set_handles.get(&map_start_index).unwrap().clone(),
+                            sprite_number: tile - map_start_index
+                        }
                     };
-
                     //create entity in world
-                    world.create_entity()
-                        .with(sprite_render)
-                        .with(sprite_transform)
-                        .build();
+                    self.map_entities.push(
+                        world.create_entity()
+                            .with(sprite_render)
+                            .with(sprite_transform)
+                            .build()
+                    );
                 }
             }
         }
-
     }
 }

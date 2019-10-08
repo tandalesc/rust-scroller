@@ -4,7 +4,7 @@ use amethyst::{
         timing::{Time},
         transform::{Transform}
     },
-    ecs::{Component, System, Join, VecStorage},
+    ecs::{Component, System, Join, DenseVecStorage},
     ecs::prelude::{
         Read,
         WriteStorage
@@ -27,7 +27,7 @@ pub struct Physics {
     pub is_jumping: bool
 }
 impl Component for Physics {
-    type Storage = VecStorage<Self>;
+    type Storage = DenseVecStorage<Self>;
 }
 impl Default for Physics {
     fn default() -> Physics {
@@ -52,7 +52,7 @@ impl <'a> System<'a> for PhysicsSystem {
     fn run(&mut self, (mut physics_set, mut transform, time): Self::SystemData) {
         let dt = time.delta_seconds();
         for (physics, transform) in (&mut physics_set, &mut transform).join() {
-            if transform.translation().y > 20. || physics.velocity.y > 0. {
+            if transform.translation().y > 30. || physics.velocity.y > 0. {
                 physics.acceleration.y = -9.8;
                 physics.velocity.y += physics.acceleration.y*dt;
             } else if physics.is_jumping {
@@ -70,7 +70,7 @@ impl <'a> System<'a> for PhysicsSystem {
             //clamp translation so new coordinates are always on the screen
             let mut new_translation = transform.translation() + physics.velocity;
             new_translation.x = new_translation.x.min(800./SCALE_FACTOR).max(0.);
-            new_translation.y = new_translation.y.min(600./SCALE_FACTOR).max(20.);
+            new_translation.y = new_translation.y.min(600./SCALE_FACTOR).max(30.);
             transform.set_translation(new_translation);
         }
     }
@@ -91,12 +91,12 @@ impl <'a> System<'a> for MovementSystem {
             input.action_is_down("jump").unwrap()
         );
         for (player, physics) in (&mut players, &mut physics_set).join() {
-            physics.acceleration.x = cx as f32 * 12.;
+            physics.acceleration.x = cx as f32 * 6.;
             if attack && !player.is_attacking  {
                 player.is_attacking = true;
             } else if jump && !physics.is_jumping && !player.is_attacking && physics.jump_cooldown == 0 {
                 physics.is_jumping = true;
-                physics.velocity.y = 8.;
+                physics.velocity.y = 4.;
             }
         }
     }
