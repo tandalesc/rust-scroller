@@ -18,12 +18,34 @@ use amethyst::{
 };
 
 use crate::character::{Player, CharacterType};
-use crate::state::{SCALE_FACTOR, CameraSettings};
 use crate::hitbox::{Hitbox};
 use crate::tilemap::{TileMap};
 
 type Point3 = na::Point3<f32>;
 type Vector3 = na::Vector3<f32>;
+
+#[derive(Debug)]
+pub struct CameraSettings {
+    pub boundaries: Vector3,
+    pub target: Vector3,
+    pub velocity: Vector3,
+    pub viewport: (f32, f32)
+}
+impl CameraSettings {
+    pub fn new(target: Vector3, boundaries: Vector3) -> CameraSettings {
+        CameraSettings {
+            target,
+            boundaries,
+            velocity: Vector3::new(0., 0., 0.),
+            viewport: (400., 300.)
+        }
+    }
+}
+impl Default for CameraSettings {
+    fn default() -> CameraSettings {
+        CameraSettings::new(Vector3::new(0.,0.,0.), Vector3::new(800.,600.,0.))
+    }
+}
 
 pub struct UpdateCameraSystem;
 impl <'a> System<'a> for UpdateCameraSystem {

@@ -1,6 +1,13 @@
 
 use amethyst::{
     assets::{Handle},
+    core::{
+        transform::{Transform}
+    },
+    prelude::*,
+    renderer::{
+        SpriteRender
+    },
     renderer::{SpriteSheet}
 };
 
@@ -21,7 +28,6 @@ impl TileMap {
         for layer_idx in 0..tile_map_data.layers.len() {
             let layer = tile_map_data.layers.get(layer_idx).unwrap();
             if layer.name == "collidable" {
-                println!("FOUND COLLIDABLE LAYER");
                 collidable_layer_idx = layer_idx;
                 break;
             }
@@ -30,6 +36,50 @@ impl TileMap {
             collidable_layer: collidable_layer_idx,
             tile_map_data,
             tile_set_handles
+        }
+    }
+    pub fn build_map(&self, world: &mut World) {
+        let num_layers = self.tile_map_data.layers.len();
+        let (map_width, map_height, tile_width, tile_height) = (
+            self.tile_map_data.width, self.tile_map_data.height,
+            self.tile_map_data.tilewidth, self.tile_map_data.tileheight
+        );
+        for layer_idx in 0..num_layers {
+            let layer = self.tile_map_data.layers.get(layer_idx).unwrap();
+            for i in 0..layer.data.len() {
+                let tile = *layer.data.get(i).unwrap();
+                if tile > 0 {
+                    let (x, y) = (
+                        (i%map_width*tile_width) as f32, (i/map_width*tile_height) as f32
+                    );
+                    let z = if layer.name.contains("background") {
+                        -1.
+                    } else if layer.name.contains("foreground") {
+                        1.
+                    } else {
+                        0.
+                    };
+                    let mut sprite_transform = Transform::default();
+                    sprite_transform.set_translation_xyz(
+                        x, (map_height*tile_height) as f32 - y, z
+                    );
+                    //find greatest map start index that is less than sprite_number
+                    let sprite_render = {
+                        let map_start_index = self.tile_set_handles.keys()
+                            .filter(|&k| k <= &tile)
+                            .fold(1, |acc, &k| if k>acc { k } else { acc });
+                        SpriteRender {
+                            sprite_sheet: self.tile_set_handles.get(&map_start_index).unwrap().clone(),
+                            sprite_number: tile - map_start_index
+                        }
+                    };
+                    //create entity in world
+                    world.create_entity()
+                        .with(sprite_render)
+                        .with(sprite_transform)
+                        .build();
+                }
+            }
         }
     }
     pub fn is_tile_collidable(&self, i: usize) -> bool {

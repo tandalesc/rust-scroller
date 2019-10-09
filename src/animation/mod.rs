@@ -10,7 +10,7 @@ use amethyst::{
 };
 
 use crate::character::{CharacterType};
-use crate::gamestate::{Physics};
+use crate::system::{Physics};
 
 #[derive(Clone, Default, Debug)]
 pub struct AnimationData {

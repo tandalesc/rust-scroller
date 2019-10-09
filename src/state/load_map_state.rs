@@ -36,7 +36,11 @@ pub fn load_tile_set(world: &World, file_name: &str, tile_map_data: &TileMapData
     let texture_handle = {
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-        loader.load(format!("{}.png", file_name), ImageFormat::default(), (), &texture_storage)
+        loader.load(format!("{}.png", if file_name.ends_with(".tsx") {
+            file_name.trim_end_matches(".tsx")
+        } else {
+            file_name
+        }), ImageFormat::default(), (), &texture_storage)
     };
     let loader = world.read_resource::<Loader>();
     let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();

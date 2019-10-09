@@ -17,7 +17,7 @@ use amethyst::{
 
 use std::collections::HashMap;
 
-use crate::gamestate::{Physics};
+use crate::system::{Physics, CameraSettings};
 use crate::character::{Player, CharacterType};
 use crate::animation::{SpriteAnimation, AnimationType, AnimationResource};
 use crate::tilemap::{TileMapData, TileMap};
@@ -29,7 +29,7 @@ pub const SCALE_FACTOR: f32 = 3.;
 
 fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(30., 30., 0.);
+    sprite_transform.set_translation_xyz(30., 50., 0.);
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
@@ -52,7 +52,7 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
 
 fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(200., 10., 0.);
+    sprite_transform.set_translation_xyz(200., 30., 0.);
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
@@ -82,29 +82,6 @@ fn init_camera(world: &mut World, width: f32, height: f32) {
         .build();
 }
 
-#[derive(Debug)]
-pub struct CameraSettings {
-    pub boundaries: Vector3,
-    pub target: Vector3,
-    pub velocity: Vector3,
-    pub viewport: (f32, f32)
-}
-impl CameraSettings {
-    pub fn new(target: Vector3, boundaries: Vector3) -> CameraSettings {
-        CameraSettings {
-            target,
-            boundaries,
-            velocity: Vector3::new(0., 0., 0.),
-            viewport: (400., 300.)
-        }
-    }
-}
-impl Default for CameraSettings {
-    fn default() -> CameraSettings {
-        CameraSettings::new(Vector3::new(0.,0.,0.), Vector3::new(800.,600.,0.))
-    }
-}
-
 #[derive(Default, Debug)]
 pub struct GameState {
     pub tile_map_data: TileMapData,
@@ -116,10 +93,6 @@ impl SimpleState for GameState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let mut world = data.world;
 
-        init_player_sprite(&mut world, &self.sprite_handles.get("player_sprite_sheet").unwrap());
-        init_enemy_sprite(&mut world, &self.sprite_handles.get("enemy_kobold_sprite_sheet").unwrap());
-
-        let num_layers = self.tile_map_data.layers.len();
         let (map_width, map_height, tile_width, tile_height) = (
             self.tile_map_data.width, self.tile_map_data.height,
             self.tile_map_data.tilewidth, self.tile_map_data.tileheight
@@ -130,39 +103,13 @@ impl SimpleState for GameState {
         let camera_settings = CameraSettings::new(Vector3::new(30., 30., 20.), pix_map_size);
         init_camera(&mut world, camera_settings.viewport.0, camera_settings.viewport.1);
 
-        for layer_idx in 0..num_layers {
-            let layer = self.tile_map_data.layers.get(layer_idx).unwrap();
-            for i in 0..layer.data.len() {
-                let tile = *layer.data.get(i).unwrap();
-                if tile > 0 {
-                    let (x, y) = (
-                        (i%map_width*tile_width) as f32, (i/map_width*tile_height) as f32
-                    );
-                    let mut sprite_transform = Transform::default();
-                    sprite_transform.set_translation_xyz(
-                        x, (map_height*tile_height) as f32 - y, -((num_layers - layer_idx) as f32)
-                    );
-                    //find greatest map start index that is less than sprite_number
-                    let sprite_render = {
-                        let map_start_index = self.tile_set_handles.keys()
-                            .filter(|&k| k <= &tile)
-                            .fold(1, |acc, &k| if k>acc { k } else { acc });
-                        SpriteRender {
-                            sprite_sheet: self.tile_set_handles.get(&map_start_index).unwrap().clone(),
-                            sprite_number: tile - map_start_index
-                        }
-                    };
-                    //create entity in world
-                    self.map_entities.push(
-                        world.create_entity()
-                            .with(sprite_render)
-                            .with(sprite_transform)
-                            .build()
-                    );
-                }
-            }
-        }
-        world.add_resource(TileMap::new(self.tile_map_data.clone(), self.tile_set_handles.clone()));
+        let tile_map = TileMap::new(self.tile_map_data.clone(), self.tile_set_handles.clone());
+        tile_map.build_map(&mut world);
+
+        world.add_resource(tile_map);
         world.add_resource(camera_settings);
+
+        init_player_sprite(&mut world, &self.sprite_handles.get("player_sprite_sheet").unwrap());
+        init_enemy_sprite(&mut world, &self.sprite_handles.get("enemy_kobold_sprite_sheet").unwrap());
     }
 }

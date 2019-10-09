@@ -12,14 +12,14 @@ use amethyst::{
     utils::application_root_dir
 };
 
-mod gamestate;
 mod animation;
 mod character;
 mod tilemap;
 mod state;
+mod system;
 mod hitbox;
 
-use crate::gamestate::{
+use crate::system::{
     MovementSystem,
     PhysicsSystem,
     UpdateCameraSystem

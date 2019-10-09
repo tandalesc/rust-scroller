@@ -7,7 +7,7 @@ use amethyst::{
     ecs::prelude::{Read, ReadStorage, WriteStorage}
 };
 
-use crate::gamestate::{Physics};
+use crate::system::{Physics};
 use crate::animation::{SpriteAnimation, AnimationType};
 
 pub enum CharacterType {
