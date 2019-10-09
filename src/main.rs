@@ -17,6 +17,7 @@ mod animation;
 mod character;
 mod tilemap;
 mod state;
+mod hitbox;
 
 use crate::gamestate::{
     MovementSystem,

@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use crate::gamestate::{Physics};
 use crate::character::{Player, CharacterType};
 use crate::animation::{SpriteAnimation, AnimationType, AnimationResource};
-use crate::tilemap::{TileMapData};
+use crate::tilemap::{TileMapData, TileMap};
 
 pub const SCALE_FACTOR: f32 = 3.;
 
@@ -48,7 +48,7 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
 
 fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(200., 30., 0.);
+    sprite_transform.set_translation_xyz(200., 10., 0.);
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
@@ -72,7 +72,7 @@ fn init_camera(world: &mut World) {
     let (width, height) = {
         //let dim = world.read_resource::<ScreenDimensions>();
         //(dim.width(), dim.height())
-        (320., 240.)
+        (640., 300.)
     };
 
     let mut transform = Transform::default();
@@ -103,8 +103,10 @@ impl SimpleState for GameState {
             self.tile_map_data.width, self.tile_map_data.height,
             self.tile_map_data.tilewidth, self.tile_map_data.tileheight
         );
+        let num_layers = self.tile_map_data.layers.len();
 
-        for layer in &self.tile_map_data.layers {
+        for layer_idx in 0..num_layers {
+            let layer = self.tile_map_data.layers.get(layer_idx).unwrap();
             for i in 0..layer.data.len() {
                 let tile = *layer.data.get(i).unwrap();
                 if tile > 0 {
@@ -113,7 +115,7 @@ impl SimpleState for GameState {
                     );
                     let mut sprite_transform = Transform::default();
                     sprite_transform.set_translation_xyz(
-                        x, (map_height*tile_height) as f32 - y, -1.
+                        x, (map_height*tile_height) as f32 - y, layer_idx as f32 - 3.
                     );
                     //find greatest map start index that is less than sprite_number
                     let sprite_render = {
@@ -135,5 +137,6 @@ impl SimpleState for GameState {
                 }
             }
         }
+        world.add_resource(TileMap::new(self.tile_map_data.clone(), self.tile_set_handles.clone()));
     }
 }

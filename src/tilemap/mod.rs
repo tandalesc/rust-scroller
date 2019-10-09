@@ -1,40 +1,10 @@
 
-use serde::{Serialize, Deserialize};
+mod json;
+mod resource;
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TileMapData {
-    pub width: usize,
-    pub height: usize,
-    infinite: bool,
-    pub layers: Vec<TileLayerData>,
-    nextlayerid: usize,
-    nextobjectid: usize,
-    orientation: String,
-    renderorder: String,
-    tiledversion: String,
-    pub tilewidth: usize,
-    pub tileheight: usize,
-    pub tilesets: Vec<TileSetSource>,
-    r#type: String,
-    version: f32
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TileLayerData {
-    pub data: Vec<usize>,
-    pub width: usize,
-    pub height: usize,
-    pub id: usize,
-    name: String,
-    r#type: String,
-    opacity: f32,
-    visible: bool,
-    x: usize,
-    y: usize
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TileSetSource {
-    pub firstgid: usize,
-    pub source: String
-}
+pub use crate::tilemap::json::{
+    TileMapData, TileLayerData, TileSetSource
+};
+pub use crate::tilemap::resource::{
+    TileMap, Tile, TileType
+};
