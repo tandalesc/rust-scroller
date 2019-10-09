@@ -140,7 +140,7 @@ impl SimpleState for GameState {
                     );
                     let mut sprite_transform = Transform::default();
                     sprite_transform.set_translation_xyz(
-                        x, (map_height*tile_height) as f32 - y, layer_idx as f32 - 3.
+                        x, (map_height*tile_height) as f32 - y, -((num_layers - layer_idx) as f32)
                     );
                     //find greatest map start index that is less than sprite_number
                     let sprite_render = {

@@ -153,7 +153,7 @@ impl <'a> System<'a> for MovementSystem {
                 player.is_attacking = true;
             } else if jump && !physics.is_jumping && !player.is_attacking && physics.jump_cooldown == 0 {
                 physics.is_jumping = true;
-                physics.velocity.y = 5.;
+                physics.velocity.y = 4.;
             }
         }
     }
