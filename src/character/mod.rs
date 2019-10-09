@@ -90,6 +90,10 @@ impl <'a> System<'a> for PlayerSystem {
                         new_anim_type = AnimationType::Idle;
                     } else if !falling && physics.velocity.y < 0. {
                         new_anim_type = AnimationType::Jump(true, running);
+                    } else if player.is_attacking {
+                        let new_combo = (player.attack_combo+1)%3;
+                        new_anim_type = AnimationType::Attack(new_combo);
+                        player.attack_combo = new_combo;
                     }
                 }
             }
