@@ -2,6 +2,7 @@
 use amethyst::{
     assets::{Handle},
     core::{
+        math as na,
         transform::{Transform}
     },
     ecs::{Entity},
@@ -20,6 +21,9 @@ use crate::gamestate::{Physics};
 use crate::character::{Player, CharacterType};
 use crate::animation::{SpriteAnimation, AnimationType, AnimationResource};
 use crate::tilemap::{TileMapData, TileMap};
+
+type Point3 = na::Point3<f32>;
+type Vector3 = na::Vector3<f32>;
 
 pub const SCALE_FACTOR: f32 = 3.;
 
@@ -68,13 +72,7 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
         .build();
 }
 
-fn init_camera(world: &mut World) {
-    let (width, height) = {
-        //let dim = world.read_resource::<ScreenDimensions>();
-        //(dim.width(), dim.height())
-        (640., 300.)
-    };
-
+fn init_camera(world: &mut World, width: f32, height: f32) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(width/2., height/2., 20.);
     let camera = Camera::standard_2d(width, height);
@@ -82,6 +80,29 @@ fn init_camera(world: &mut World) {
         .with(camera)
         .with(transform)
         .build();
+}
+
+#[derive(Debug)]
+pub struct CameraSettings {
+    pub boundaries: Vector3,
+    pub target: Vector3,
+    pub velocity: Vector3,
+    pub viewport: (f32, f32)
+}
+impl CameraSettings {
+    pub fn new(target: Vector3, boundaries: Vector3) -> CameraSettings {
+        CameraSettings {
+            target,
+            boundaries,
+            velocity: Vector3::new(0., 0., 0.),
+            viewport: (400., 300.)
+        }
+    }
+}
+impl Default for CameraSettings {
+    fn default() -> CameraSettings {
+        CameraSettings::new(Vector3::new(0.,0.,0.), Vector3::new(800.,600.,0.))
+    }
 }
 
 #[derive(Default, Debug)]
@@ -97,13 +118,17 @@ impl SimpleState for GameState {
 
         init_player_sprite(&mut world, &self.sprite_handles.get("player_sprite_sheet").unwrap());
         init_enemy_sprite(&mut world, &self.sprite_handles.get("enemy_kobold_sprite_sheet").unwrap());
-        init_camera(&mut world);
 
+        let num_layers = self.tile_map_data.layers.len();
         let (map_width, map_height, tile_width, tile_height) = (
             self.tile_map_data.width, self.tile_map_data.height,
             self.tile_map_data.tilewidth, self.tile_map_data.tileheight
         );
-        let num_layers = self.tile_map_data.layers.len();
+        let pix_map_size = Vector3::new(
+            (map_width*tile_width) as f32, (map_height*tile_height) as f32, 0.
+        );
+        let camera_settings = CameraSettings::new(Vector3::new(30., 30., 20.), pix_map_size);
+        init_camera(&mut world, camera_settings.viewport.0, camera_settings.viewport.1);
 
         for layer_idx in 0..num_layers {
             let layer = self.tile_map_data.layers.get(layer_idx).unwrap();
@@ -138,5 +163,6 @@ impl SimpleState for GameState {
             }
         }
         world.add_resource(TileMap::new(self.tile_map_data.clone(), self.tile_set_handles.clone()));
+        world.add_resource(camera_settings);
     }
 }

@@ -21,7 +21,8 @@ mod hitbox;
 
 use crate::gamestate::{
     MovementSystem,
-    PhysicsSystem
+    PhysicsSystem,
+    UpdateCameraSystem
 };
 use crate::character::{
     PlayerSystem
@@ -49,9 +50,10 @@ fn main() -> amethyst::Result<()> {
                 .with_bindings_from_file(config_dir.join("input.ron"))?
         )?
         .with(MovementSystem, "movement_system", &[])
-        .with(PhysicsSystem, "physics_system", &[])
-        .with(PlayerSystem, "player_system", &[])
-        .with(AnimationSystem, "animation_system", &[])
+        .with(PhysicsSystem, "physics_system", &["movement_system"])
+        .with(UpdateCameraSystem, "update_camera_system", &["movement_system"])
+        .with(PlayerSystem, "player_system", &["physics_system"])
+        .with(AnimationSystem, "animation_system", &["player_system"])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(

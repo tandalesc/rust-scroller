@@ -7,18 +7,45 @@ use amethyst::{
     ecs::{Component, System, Join, DenseVecStorage},
     ecs::prelude::{
         Read,
+        Write,
+        ReadStorage,
         WriteStorage
+    },
+    renderer::{
+        Camera
     },
     input::{InputHandler, StringBindings},
 };
 
-use crate::character::{Player};
-use crate::state::{SCALE_FACTOR};
+use crate::character::{Player, CharacterType};
+use crate::state::{SCALE_FACTOR, CameraSettings};
 use crate::hitbox::{Hitbox};
 use crate::tilemap::{TileMap};
 
 type Point3 = na::Point3<f32>;
 type Vector3 = na::Vector3<f32>;
+
+pub struct UpdateCameraSystem;
+impl <'a> System<'a> for UpdateCameraSystem {
+    type SystemData = (
+        ReadStorage<'a, Camera>,
+        WriteStorage<'a, Transform>,
+        Read<'a, CameraSettings>,
+        Read<'a, Time>,
+    );
+    fn run(&mut self, (cameras, mut transform_set, camera_settings, time): Self::SystemData) {
+        let dt = time.delta_seconds();
+        for (camera, transform) in (&cameras, &mut transform_set).join() {
+            let disp = (camera_settings.target - transform.translation())*dt;
+            if disp.norm() > 0. {
+                let mut translate = transform.translation().clone() + Vector3::new(disp.x, disp.y, 0.);
+                translate.x = translate.x.min(camera_settings.boundaries.x - camera_settings.viewport.0/2.).max(camera_settings.viewport.0/2.);
+                translate.y = translate.y.min(camera_settings.boundaries.y - camera_settings.viewport.1/2.).max(camera_settings.viewport.1/2.);
+                transform.set_translation(translate);
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Physics {
@@ -48,18 +75,20 @@ impl Default for Physics {
 pub struct PhysicsSystem;
 impl <'a> System<'a> for PhysicsSystem {
     type SystemData = (
+        ReadStorage<'a, CharacterType>,
         WriteStorage<'a, Physics>,
         WriteStorage<'a, Transform>,
+        Write<'a, CameraSettings>,
         Read<'a, TileMap>,
         Read<'a, Time>,
     );
-    fn run(&mut self, (mut physics_set, mut transform, tilemap, time): Self::SystemData) {
+    fn run(&mut self, (character_types, mut physics_set, mut transform, mut camera_settings, tilemap, time): Self::SystemData) {
         let dt = time.delta_seconds();
-        for (physics, transform) in (&mut physics_set, &mut transform).join() {
+        for (character_type, physics, transform) in (&character_types, &mut physics_set, &mut transform).join() {
             let trans = transform.translation();
             let hb = Hitbox {
                 position: Point3::new(trans.x, trans.y-8., 0.),
-                size: Vector3::new(8., 16., 0.)
+                size: Vector3::new(10., 18., 0.)
             };
             let map_collisions = hb.get_map_collisions(&tilemap);
             let num_collisions = map_collisions.len();
@@ -87,14 +116,19 @@ impl <'a> System<'a> for PhysicsSystem {
             let mut new_translation = transform.translation() + physics.velocity;
             for collision in &map_collisions {
                 if collision.direction.x.abs() > 0. && collision.direction.y == 0. {
-                    new_translation += collision.direction*dt;
+                    new_translation.x += collision.direction.x*dt;
                 } else {
                     new_translation.y += collision.direction.y*dt;
                 }
             }
             new_translation.x = new_translation.x.max(0.);
             new_translation.y = new_translation.y.max(0.);
+
             transform.set_translation(new_translation);
+            //target player with camera after updating position
+            if let CharacterType::Player = character_type {
+                camera_settings.target = new_translation;
+            }
         }
     }
 }
