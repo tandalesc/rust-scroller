@@ -95,17 +95,4 @@ impl TileMap {
     pub fn pix_to_map(&self, pix: f32) -> usize {
         (pix / self.tile_map_data.tilewidth as f32).floor() as usize
     }
-    pub fn map_to_pix(&self, map: usize) -> f32 {
-        (map * self.tile_map_data.tilewidth) as f32
-    }
- }
-
-pub struct Tile {
-    tile_index: usize,
-    tile_type: TileType
-}
-
-pub enum TileType {
-    Background,
-    Collidable
 }

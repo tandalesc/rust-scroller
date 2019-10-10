@@ -57,11 +57,11 @@ impl <'a> System<'a> for UpdateCameraSystem {
     );
     fn run(&mut self, (cameras, mut transform_set, camera_settings, time): Self::SystemData) {
         let dt = time.delta_seconds();
-        for (camera, transform) in (&cameras, &mut transform_set).join() {
+        for (_, transform) in (&cameras, &mut transform_set).join() {
             let disp = (camera_settings.target - transform.translation())*dt;
             if disp.norm() > 0. {
                 let mut translate = transform.translation().clone() + Vector3::new(disp.x, disp.y, 0.);
-                translate.x = translate.x.min(camera_settings.boundaries.x - camera_settings.viewport.0/2.).max(camera_settings.viewport.0/2.);
+                translate.x = translate.x.min(camera_settings.boundaries.x - camera_settings.viewport.0/2. - 8.).max(camera_settings.viewport.0/2. - 8.);
                 translate.y = translate.y.min(camera_settings.boundaries.y - camera_settings.viewport.1/2.).max(camera_settings.viewport.1/2.);
                 transform.set_translation(translate);
             }
@@ -110,12 +110,12 @@ impl <'a> System<'a> for PhysicsSystem {
             let trans = transform.translation();
             let hb = Hitbox {
                 position: Point3::new(trans.x, trans.y, 0.),
-                size: Vector3::new(14., 10., 0.)
+                size: Vector3::new(12., 10., 0.)
             };
             let new_trans = transform.translation() + physics.velocity*dt + physics.acceleration*dt*dt/2.;
             let new_hb = Hitbox {
                 position: Point3::new(new_trans.x, new_trans.y, 0.),
-                size: Vector3::new(14., 10., 0.)
+                size: Vector3::new(12., 10., 0.)
             };
             let dist = trans - new_trans;
             let total_hb = {
@@ -139,7 +139,7 @@ impl <'a> System<'a> for PhysicsSystem {
                     physics.velocity.y = -dist.y;
                     if physics.is_jumping {
                         physics.is_jumping = false;
-                        physics.jump_cooldown = 5; //5 frames
+                        physics.jump_cooldown = 6; //5 frames
                     }
                 }
             } else {
@@ -148,11 +148,11 @@ impl <'a> System<'a> for PhysicsSystem {
                 }
                 physics.acceleration.y = -9.8;
             }
-            if left && physics.acceleration.x < 0. {
+            if left && physics.velocity.x < 0. {
                 physics.acceleration.x = 0.;
                 physics.velocity.x = -dist.x;
             }
-            if right && physics.acceleration.x > 0. {
+            if right && physics.velocity.x > 0. {
                 physics.acceleration.x = 0.;
                 physics.velocity.x = -dist.x;
             }
@@ -164,7 +164,7 @@ impl <'a> System<'a> for PhysicsSystem {
                 physics.jump_cooldown -= 1;
             }
             physics.velocity += physics.acceleration*dt;
-            physics.velocity.x -= physics.velocity.x*physics.friction*10.*dt;
+            physics.velocity.x -= physics.velocity.x*physics.friction*14.*dt;
             //clamp translation so new coordinates are always on the screen
             let mut new_translation = transform.translation() + physics.velocity;
             new_translation.x = new_translation.x.max(0.);
@@ -194,7 +194,7 @@ impl <'a> System<'a> for MovementSystem {
             input.action_is_down("jump").unwrap()
         );
         for (player, physics) in (&mut players, &mut physics_set).join() {
-            physics.acceleration.x = cx as f32 * 8.;
+            physics.acceleration.x = cx as f32 * 12.;
             if attack && !player.is_attacking  {
                 player.is_attacking = true;
             } else if jump && !physics.is_jumping && !player.is_attacking && physics.jump_cooldown == 0 {

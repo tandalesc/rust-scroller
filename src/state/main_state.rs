@@ -11,8 +11,7 @@ use amethyst::{
         Camera,
         SpriteRender, SpriteSheet,
         Transparent
-    },
-    window::ScreenDimensions
+    }
 };
 
 use std::collections::HashMap;
@@ -22,10 +21,7 @@ use crate::character::{Player, CharacterType};
 use crate::animation::{SpriteAnimation, AnimationType, AnimationResource};
 use crate::tilemap::{TileMapData, TileMap};
 
-type Point3 = na::Point3<f32>;
 type Vector3 = na::Vector3<f32>;
-
-pub const SCALE_FACTOR: f32 = 3.;
 
 fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
@@ -74,7 +70,7 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
 
 fn init_camera(world: &mut World, width: f32, height: f32) {
     let mut transform = Transform::default();
-    transform.set_translation_xyz(width/2., height/2., 20.);
+    transform.set_translation_xyz(width/2.-8., height/2., 20.);
     let camera = Camera::standard_2d(width, height);
     world.create_entity()
         .with(camera)
