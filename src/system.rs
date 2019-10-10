@@ -195,11 +195,19 @@ impl <'a> System<'a> for MovementSystem {
         );
         for (player, physics) in (&mut players, &mut physics_set).join() {
             physics.acceleration.x = cx as f32 * 12.;
-            if attack && !player.is_attacking  {
-                player.is_attacking = true;
-            } else if jump && !physics.is_jumping && !player.is_attacking && physics.jump_cooldown == 0 {
-                physics.is_jumping = true;
-                physics.velocity.y = 4.;
+            if jump {
+                let e_cost = 25.;
+                if !physics.is_jumping && physics.jump_cooldown==0 && player.endurance-e_cost > 0. {
+                    physics.is_jumping = true;
+                    player.endurance -= e_cost;
+                    physics.velocity.y = 4.;
+                }
+            } else if attack {
+                let e_cost = 15.;
+                if !player.is_attacking && player.endurance-e_cost > 0. {
+                    player.is_attacking = true;
+                    player.endurance -= e_cost;
+                }
             }
         }
     }

@@ -27,14 +27,16 @@ impl Default for CharacterType {
 pub struct Player {
     pub is_attacking: bool,
     pub attack_combo: u8,
-    pub attack_timer: f32
+    pub attack_timer: f32,
+    pub endurance: f32
 }
 impl Player {
     pub fn new() -> Player {
         Player {
             is_attacking: false,
             attack_combo: 0,
-            attack_timer: 0.0
+            attack_timer: 0.,
+            endurance: 100.
         }
     }
 }
@@ -80,7 +82,11 @@ impl <'a> System<'a> for PlayerSystem {
                         new_anim_type = AnimationType::Attack(new_combo);
                         player.attack_combo = new_combo;
                     } else if physics.is_jumping {
-                        new_anim_type = AnimationType::Jump(false, true);
+                        new_anim_type = if physics.velocity.x.abs() > 1.5 {
+                            AnimationType::Jump(false, true)
+                        } else {
+                            AnimationType::Jump(false, false)
+                        };
                     } else if physics.velocity.x.abs() < 0.1 {
                         new_anim_type = AnimationType::Idle;
                     }
@@ -107,6 +113,10 @@ impl <'a> System<'a> for PlayerSystem {
                 player.attack_timer = new_at;
             } else if player.attack_combo > 0 {
                 player.attack_combo = 0;
+            }
+
+            if player.endurance < 100. {
+                player.endurance += 0.3;
             }
         }
     }
