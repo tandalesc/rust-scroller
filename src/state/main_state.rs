@@ -29,7 +29,7 @@ pub const SCALE_FACTOR: f32 = 3.;
 
 fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(30., 50., 0.);
+    sprite_transform.set_translation_xyz(30., 64., 0.);
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0
@@ -52,7 +52,7 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
 
 fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet>) {
     let mut sprite_transform = Transform::default();
-    sprite_transform.set_translation_xyz(200., 30., 0.);
+    sprite_transform.set_translation_xyz(220., 64., 0.);
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle.clone(),
         sprite_number: 0

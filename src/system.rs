@@ -109,40 +109,64 @@ impl <'a> System<'a> for PhysicsSystem {
         for (character_type, physics, transform) in (&character_types, &mut physics_set, &mut transform).join() {
             let trans = transform.translation();
             let hb = Hitbox {
-                position: Point3::new(trans.x, trans.y-8., 0.),
-                size: Vector3::new(10., 18., 0.)
+                position: Point3::new(trans.x, trans.y, 0.),
+                size: Vector3::new(14., 10., 0.)
             };
-            let map_collisions = hb.get_map_collisions(&tilemap);
-            let num_collisions = map_collisions.len();
-            let avg_collision = map_collisions.iter()
-                .fold(Vector3::new(0.,0.,0.), |acc, col| acc + col.direction/(num_collisions as f32));
-
-            if avg_collision.y <= 0. || physics.velocity.y > 0. {
-                physics.acceleration.y = -9.8;
-            } else if avg_collision.y > 0. {
-                //we hit the ground, reset jumping flag
-                if physics.is_jumping {
-                    physics.is_jumping = false;
-                    physics.jump_cooldown = 5; //5 frames
+            let new_trans = transform.translation() + physics.velocity*dt + physics.acceleration*dt*dt/2.;
+            let new_hb = Hitbox {
+                position: Point3::new(new_trans.x, new_trans.y, 0.),
+                size: Vector3::new(14., 10., 0.)
+            };
+            let dist = trans - new_trans;
+            let total_hb = {
+                let tl_hb = if trans.x <= new_trans.x && trans.y <= new_trans.y { hb } else { new_hb };
+                Hitbox {
+                    position: Point3::new(tl_hb.position.x, tl_hb.position.y, 0.),
+                    size: Vector3::new(dist.x.abs() + tl_hb.size.x, dist.y.abs() + tl_hb.size.y, 0.)
                 }
-                physics.acceleration.y = 0.;
-                physics.velocity.y = 0.;
+            };
+
+            let (left, top, right, bottom) = (
+                total_hb.colliding_with_left_wall(&tilemap),
+                total_hb.colliding_with_ceiling(&tilemap),
+                total_hb.colliding_with_right_wall(&tilemap),
+                total_hb.colliding_with_ground(&tilemap),
+            );
+
+            if bottom {
+                if physics.velocity.y < 0. {
+                    physics.acceleration.y = 0.;
+                    physics.velocity.y = -dist.y;
+                    if physics.is_jumping {
+                        physics.is_jumping = false;
+                        physics.jump_cooldown = 5; //5 frames
+                    }
+                }
+            } else {
+                if !physics.is_jumping {
+                    physics.is_jumping = true;
+                }
+                physics.acceleration.y = -9.8;
+            }
+            if left && physics.acceleration.x < 0. {
+                physics.acceleration.x = 0.;
+                physics.velocity.x = -dist.x;
+            }
+            if right && physics.acceleration.x > 0. {
+                physics.acceleration.x = 0.;
+                physics.velocity.x = -dist.x;
+            }
+            if top && physics.velocity.y > 0. {
+                physics.velocity.y = -dist.y;
             }
 
             if physics.jump_cooldown > 0 {
                 physics.jump_cooldown -= 1;
             }
             physics.velocity += physics.acceleration*dt;
-            physics.velocity.x -= physics.velocity.x*physics.friction*9.8*dt;
+            physics.velocity.x -= physics.velocity.x*physics.friction*10.*dt;
             //clamp translation so new coordinates are always on the screen
             let mut new_translation = transform.translation() + physics.velocity;
-            for collision in &map_collisions {
-                if collision.direction.x.abs() > 0. && collision.direction.y == 0. {
-                    new_translation.x += collision.direction.x*dt;
-                } else {
-                    new_translation.y += collision.direction.y*dt;
-                }
-            }
             new_translation.x = new_translation.x.max(0.);
             new_translation.y = new_translation.y.max(0.);
 
