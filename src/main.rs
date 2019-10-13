@@ -12,6 +12,9 @@ use amethyst::{
     utils::application_root_dir
 };
 
+use amethyst_physics::PhysicsBundle;
+use amethyst_nphysics::NPhysicsBackend;
+
 mod animation;
 mod character;
 mod tilemap;
@@ -45,15 +48,16 @@ fn main() -> amethyst::Result<()> {
 
     let game_data = GameDataBuilder::default()
         .with_bundle(TransformBundle::new())?
+        .with_bundle(PhysicsBundle::<f32, NPhysicsBackend>::new())?
         .with_bundle(
             InputBundle::<StringBindings>::new()
                 .with_bindings_from_file(config_dir.join("input.ron"))?
         )?
         .with(MovementSystem, "movement_system", &[])
-        .with(PhysicsSystem, "physics_system", &["movement_system"])
+        //.with(PhysicsSystem, "physics_system", &["movement_system"])
         .with(UpdateCameraSystem, "update_camera_system", &["movement_system"])
-        .with(PlayerSystem, "player_system", &["physics_system"])
-        .with(AnimationSystem, "animation_system", &["player_system"])
+        .with(PlayerSystem, "player_system", &["movement_system"])
+        .with(AnimationSystem, "animation_system", &["movement_system"])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(

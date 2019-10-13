@@ -2,7 +2,8 @@
 use amethyst::{
     assets::{Handle},
     core::{
-        transform::{Transform}
+        transform::{Transform},
+        math as na
     },
     prelude::*,
     renderer::{
@@ -11,9 +12,15 @@ use amethyst::{
     renderer::{SpriteSheet}
 };
 
+use amethyst_physics::prelude::{
+    RigidBodyDesc, ShapeDesc, BodyMode, PhysicsWorld, CollisionGroup
+};
+
 use std::collections::HashMap;
 
 use super::TileMapData;
+
+type Vector3 = na::Vector3<f32>;
 
 #[derive(Default, Debug)]
 pub struct TileMap {
@@ -44,6 +51,19 @@ impl TileMap {
             self.tile_map_data.width, self.tile_map_data.height,
             self.tile_map_data.tilewidth, self.tile_map_data.tileheight
         );
+        //shape and rigid body info for physics
+        let s_desc = ShapeDesc::Cube {half_extents: Vector3::new(tile_width as f32/2., tile_height as f32/2., 0.2)};
+        let mut rb_desc = RigidBodyDesc::default();
+        rb_desc.mode = BodyMode::Static;
+        rb_desc.belong_to = vec![CollisionGroup::new(0u8)];
+        rb_desc.collide_with = vec![CollisionGroup::new(0u8)];
+        rb_desc.lock_translation_x = true;
+        rb_desc.lock_translation_y = true;
+        rb_desc.lock_translation_z = true;
+        rb_desc.lock_rotation_x = true;
+        rb_desc.lock_rotation_y = true;
+        rb_desc.lock_rotation_z = true;
+        //loop through all possible tiles
         for layer_idx in 0..num_layers {
             let layer = self.tile_map_data.layers.get(layer_idx).unwrap();
             for i in 0..layer.data.len() {
@@ -73,11 +93,27 @@ impl TileMap {
                             sprite_number: tile - map_start_index
                         }
                     };
+                    let rigid_body = {
+                        let physics_world = world.fetch::<PhysicsWorld<f32>>();
+                        physics_world.rigid_body_server().create(&rb_desc)
+                    };
+                    let physics_shape = {
+                        let physics_world = world.fetch::<PhysicsWorld<f32>>();
+                        physics_world.shape_server().create(&s_desc)
+                    };
                     //create entity in world
-                    world.create_entity()
+                    let entity = world.create_entity()
                         .with(sprite_render)
-                        .with(sprite_transform)
-                        .build();
+                        .with(sprite_transform);
+                    //collidable layer
+                    if z == 0. {
+                        //create physics entities
+                        entity.with(rigid_body)
+                            .with(physics_shape)
+                            .build();
+                    } else {
+                        entity.build();
+                    }
                 }
             }
         }

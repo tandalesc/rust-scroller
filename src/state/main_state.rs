@@ -14,6 +14,10 @@ use amethyst::{
     }
 };
 
+use amethyst_physics::prelude::{
+    RigidBodyDesc, ShapeDesc, BodyMode, PhysicsWorld, CollisionGroup
+};
+
 use std::collections::HashMap;
 
 use crate::system::{Physics, CameraSettings};
@@ -34,15 +38,33 @@ fn init_player_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteShee
     let anim_type = AnimationType::Idle;
     let animation_data =  world.read_resource::<AnimationResource>().data(&char_type, &anim_type);
     let animation = SpriteAnimation::from_data(animation_data);
+    //physics info
+    let mut rb_desc = RigidBodyDesc::default();
+    rb_desc.belong_to = vec![CollisionGroup::new(0u8)];
+    rb_desc.collide_with = vec![CollisionGroup::new(0u8)];
+    rb_desc.lock_translation_z = true;
+    rb_desc.lock_rotation_x = true;
+    rb_desc.lock_rotation_y = true;
+    rb_desc.lock_rotation_z = true;
+    let s_desc = ShapeDesc::Cube {half_extents: Vector3::new(8., 12., 0.2)};
+    let rigid_body = {
+        let physics_world = world.fetch::<PhysicsWorld<f32>>();
+        physics_world.rigid_body_server().create(&rb_desc)
+    };
+    let physics_shape = {
+        let physics_world = world.fetch::<PhysicsWorld<f32>>();
+        physics_world.shape_server().create(&s_desc)
+    };
     world.create_entity()
         .with(sprite_render)
         .with(sprite_transform)
         .with(animation)
-        .with(Physics::default())
         .with(Player::new())
         .with(char_type)
         .with(anim_type)
         .with(Transparent)
+        .with(rigid_body)
+        .with(physics_shape)
         .build();
 }
 
@@ -57,14 +79,32 @@ fn init_enemy_sprite(world: &mut World, sprite_sheet_handle: &Handle<SpriteSheet
     let anim_type = AnimationType::Attack(0);
     let animation_data =  world.read_resource::<AnimationResource>().data(&char_type, &anim_type);
     let animation = SpriteAnimation::from_data(animation_data);
+    //physics info
+    let mut rb_desc = RigidBodyDesc::default();
+    rb_desc.belong_to = vec![CollisionGroup::new(0u8)];
+    rb_desc.collide_with = vec![CollisionGroup::new(0u8)];
+    rb_desc.lock_translation_z = true;
+    rb_desc.lock_rotation_x = true;
+    rb_desc.lock_rotation_y = true;
+    rb_desc.lock_rotation_z = true;
+    let s_desc = ShapeDesc::Cube {half_extents: Vector3::new(8., 12., 0.2)};
+    let rigid_body = {
+        let physics_world = world.fetch::<PhysicsWorld<f32>>();
+        physics_world.rigid_body_server().create(&rb_desc)
+    };
+    let physics_shape = {
+        let physics_world = world.fetch::<PhysicsWorld<f32>>();
+        physics_world.shape_server().create(&s_desc)
+    };
     world.create_entity()
         .with(sprite_render)
         .with(sprite_transform)
         .with(animation)
-        .with(Physics::default())
         .with(char_type)
         .with(anim_type)
         .with(Transparent)
+        .with(rigid_body)
+        .with(physics_shape)
         .build();
 }
 
